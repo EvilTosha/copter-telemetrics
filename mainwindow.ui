@@ -15,34 +15,53 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_2">
-    <item row="1" column="0">
-     <widget class="QLineEdit" name="hostNameLineEdit">
+    <item row="3" column="0" colspan="2">
+     <widget class="QPushButton" name="connectButton">
       <property name="text">
-       <string>192.168.1.100</string>
+       <string>Connect!</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="2">
-     <widget class="QPushButton" name="disconnectButton">
-      <property name="text">
-       <string>Disconnect</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="0" colspan="3">
+    <item row="1" column="0" colspan="2">
      <widget class="QTextBrowser" name="logTextBrowser"/>
     </item>
-    <item row="1" column="1">
+    <item row="2" column="1">
      <widget class="QLineEdit" name="portLineEdit">
       <property name="text">
        <string>7777</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="0" colspan="2">
-     <widget class="QPushButton" name="connectButton">
+    <item row="2" column="0">
+     <widget class="QLineEdit" name="hostNameLineEdit">
       <property name="text">
-       <string>Connect!</string>
+       <string>192.168.1.100</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="9">
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="2" column="2">
+       <widget class="QLCDNumber" name="powerX2Lcd"/>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLCDNumber" name="powerAllLcd"/>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLCDNumber" name="powerX1Lcd"/>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLCDNumber" name="powerY1Lcd"/>
+      </item>
+      <item row="1" column="3">
+       <widget class="QLCDNumber" name="powerY2Lcd"/>
+      </item>
+     </layout>
+    </item>
+    <item row="4" column="0" colspan="2">
+     <widget class="QPushButton" name="disconnectButton">
+      <property name="text">
+       <string>Disconnect</string>
       </property>
      </widget>
     </item>
