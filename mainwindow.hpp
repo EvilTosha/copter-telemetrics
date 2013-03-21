@@ -33,6 +33,7 @@ private:
 
 	QVector<QPointF> m_points;
 	QwtPointSeriesData* m_plotData;
+	QwtPlotCurve* m_plotCurve;
 	int m_counter;
 };
 

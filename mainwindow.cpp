@@ -3,10 +3,12 @@
 
 #include <QTimer>
 
+static const int s_plot_length = 100;
+
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
 	ui(new Ui::MainWindow),
-	m_points(),
+	m_points(100, QPointF(0, 0)),
 	m_counter(0)
 {
 	ui->setupUi(this);
@@ -17,35 +19,37 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->connectButton, SIGNAL(clicked()), this, SLOT(connectToServer()));
 	connect(ui->disconnectButton, SIGNAL(clicked()), this, SLOT(disconnectToServer()));
 
+	// plotting setup
 	m_plotData = new QwtPointSeriesData();
+	m_plotCurve = new QwtPlotCurve( "Data Moving Right" );
+	m_plotCurve->setPen( QPen( Qt::black ) );
+	m_plotCurve->attach( ui->plot );
+
+	ui->plot->setCanvasBackground(Qt::white);
+	// Axis
+	ui->plot->setAxisTitle( QwtPlot::xBottom, "Seconds" );
+	ui->plot->setAxisTitle( QwtPlot::yLeft, "Values" );
+	ui->plot->setAxisScale( QwtPlot::yLeft, 0.0, 10.0 );
 
 	updatePlot();
 
 	QTimer* t = new QTimer(this);
-	t->setInterval(100);
+	t->setInterval(10);
 	connect(t, SIGNAL(timeout()), this, SLOT(updatePlot()));
 	t->start();
 }
 
 void MainWindow::updatePlot()
 {
-	QwtPlotCurve* d_curve = new QwtPlotCurve( "Data Moving Right" );
-	m_points.push_back(QPointF(m_counter, (qrand() % 100) / 10));
+	for (int i = 0; i < s_plot_length - 1; ++i) {
+		m_points[i] = m_points[i + 1];
+	}
+	m_points[s_plot_length - 1] = QPointF(m_counter, (qrand() % 100) / 10);
 
 	++m_counter;
-
 	m_plotData->setSamples(m_points);
-
-	d_curve->setPen( QPen( Qt::black ) );
-	d_curve->setData( m_plotData );
-	d_curve->attach( ui->plot );
-
-	// Axis
-	ui->plot->setAxisTitle( QwtPlot::xBottom, "Seconds" );
-	ui->plot->setAxisScale( QwtPlot::xBottom, m_counter - 10, m_counter );
-
-	ui->plot->setAxisTitle( QwtPlot::yLeft, "Values" );
-	ui->plot->setAxisScale( QwtPlot::yLeft, 0.0, 10.0 );
+	m_plotCurve->setData( m_plotData );
+	ui->plot->setAxisScale( QwtPlot::xBottom, m_counter - 100, m_counter );
 
 	ui->plot->replot();
 }
