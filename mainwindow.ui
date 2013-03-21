@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>465</width>
+    <height>339</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,15 +15,31 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_2">
-    <item row="3" column="0" colspan="2">
+    <item row="1" column="10">
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="2" column="2">
+       <widget class="QLCDNumber" name="powerX2Lcd"/>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLCDNumber" name="powerX1Lcd"/>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLCDNumber" name="powerY1Lcd"/>
+      </item>
+      <item row="1" column="3">
+       <widget class="QLCDNumber" name="powerY2Lcd"/>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLCDNumber" name="powerAllLcd"/>
+      </item>
+     </layout>
+    </item>
+    <item row="2" column="3">
      <widget class="QPushButton" name="connectButton">
       <property name="text">
        <string>Connect!</string>
       </property>
      </widget>
-    </item>
-    <item row="1" column="0" colspan="2">
-     <widget class="QTextBrowser" name="logTextBrowser"/>
     </item>
     <item row="2" column="1">
      <widget class="QLineEdit" name="portLineEdit">
@@ -39,26 +55,20 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="9">
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="2" column="2">
-       <widget class="QLCDNumber" name="powerX2Lcd"/>
-      </item>
-      <item row="1" column="2">
-       <widget class="QLCDNumber" name="powerAllLcd"/>
-      </item>
-      <item row="0" column="2">
-       <widget class="QLCDNumber" name="powerX1Lcd"/>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLCDNumber" name="powerY1Lcd"/>
-      </item>
-      <item row="1" column="3">
-       <widget class="QLCDNumber" name="powerY2Lcd"/>
-      </item>
-     </layout>
+    <item row="1" column="0" colspan="4">
+     <widget class="QTextBrowser" name="logTextBrowser"/>
     </item>
-    <item row="4" column="0" colspan="2">
+    <item row="3" column="0" colspan="11">
+     <widget class="QwtPlot" name="plot" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="9" colspan="2">
      <widget class="QPushButton" name="disconnectButton">
       <property name="text">
        <string>Disconnect</string>
@@ -72,7 +82,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>400</width>
+     <width>465</width>
      <height>21</height>
     </rect>
    </property>
@@ -88,6 +98,14 @@
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QwtPlot</class>
+   <extends>QWidget</extends>
+   <header location="global">qwt_plot.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

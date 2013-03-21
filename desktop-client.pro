@@ -19,3 +19,10 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.hpp
 
 FORMS    += mainwindow.ui
+
+CONFIG += qwt
+
+
+INCLUDEPATH += /usr/local/qwt-6.0.3-svn/include/
+
+LIBS += -lqwt
