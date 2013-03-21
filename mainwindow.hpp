@@ -25,15 +25,15 @@ public slots:
 	void connectToServer();
 	void disconnectToServer();
 
-	void updatePlot();
+	void updatePlot(double val, double altVal);
 
 private:
 	Ui::MainWindow *ui;
 	QTcpSocket* m_tcpSocket;
 
-	QVector<QPointF> m_points;
-	QwtPointSeriesData* m_plotData;
-	QwtPlotCurve* m_plotCurve;
+	QVector<QPointF> m_points, m_altPoints;
+	QwtPointSeriesData* m_plotData, *m_altPlotData;
+	QwtPlotCurve* m_plotCurve, *m_altPlotCurve;
 	int m_counter;
 };
 
