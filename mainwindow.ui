@@ -15,7 +15,14 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_2">
-    <item row="1" column="10">
+    <item row="3" column="0">
+     <widget class="QLineEdit" name="hostNameLineEdit">
+      <property name="text">
+       <string>192.168.1.100</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="11">
      <layout class="QGridLayout" name="gridLayout">
       <item row="2" column="2">
        <widget class="QLCDNumber" name="powerX2Lcd"/>
@@ -34,31 +41,41 @@
       </item>
      </layout>
     </item>
-    <item row="2" column="3">
-     <widget class="QPushButton" name="connectButton">
-      <property name="text">
-       <string>Connect!</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="1">
+    <item row="3" column="1">
      <widget class="QLineEdit" name="portLineEdit">
       <property name="text">
        <string>7777</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="0">
-     <widget class="QLineEdit" name="hostNameLineEdit">
+    <item row="3" column="10" colspan="2">
+     <widget class="QPushButton" name="disconnectButton">
       <property name="text">
-       <string>192.168.1.100</string>
+       <string>Disconnect</string>
       </property>
      </widget>
     </item>
-    <item row="1" column="0" colspan="4">
-     <widget class="QTextBrowser" name="logTextBrowser"/>
+    <item row="3" column="3" colspan="2">
+     <widget class="QPushButton" name="connectButton">
+      <property name="text">
+       <string>Connect!</string>
+      </property>
+     </widget>
     </item>
-    <item row="3" column="0" colspan="11">
+    <item row="1" column="4">
+     <widget class="QSlider" name="xSlider">
+      <property name="minimum">
+       <number>-200</number>
+      </property>
+      <property name="maximum">
+       <number>200</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0" colspan="12">
      <widget class="QwtPlot" name="plot" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
@@ -68,10 +85,26 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="9" colspan="2">
-     <widget class="QPushButton" name="disconnectButton">
-      <property name="text">
-       <string>Disconnect</string>
+    <item row="1" column="1" colspan="3">
+     <widget class="QSlider" name="ySlider">
+      <property name="minimum">
+       <number>-200</number>
+      </property>
+      <property name="maximum">
+       <number>200</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QTextBrowser" name="logTextBrowser">
+      <property name="minimumSize">
+       <size>
+        <width>50</width>
+        <height>25</height>
+       </size>
       </property>
      </widget>
     </item>

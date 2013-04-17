@@ -8,7 +8,8 @@ static const int s_plot_length = 100;
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
 	ui(new Ui::MainWindow),
-	m_points(100, QPointF(0, 0)), m_altPoints(100, QPointF(0, 0)),
+	m_accelXPoints(100, QPointF(0, 0)), m_accelYPoints(100, QPointF(0, 0)),
+	m_gyroXPoints(100, QPointF(0, 0)), m_gyroYPoints(100, QPointF(0, 0)),
 	m_counter(0)
 {
 	ui->setupUi(this);
@@ -20,22 +21,31 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->disconnectButton, SIGNAL(clicked()), this, SLOT(disconnectToServer()));
 
 	// plotting setup
-	m_plotData = new QwtPointSeriesData();
-	m_altPlotData = new QwtPointSeriesData();
-	m_plotCurve = new QwtPlotCurve( "Data Moving Right" );
-	m_altPlotCurve = new QwtPlotCurve();
-	m_plotCurve->setPen( QPen( Qt::black ) );
-	m_altPlotCurve->setPen( QPen( Qt::red));
-	m_plotCurve->attach( ui->plot );
-	m_altPlotCurve->attach(ui->plot);
+	m_accelXData = new QwtPointSeriesData();
+	m_accelYData = new QwtPointSeriesData();
+	m_accelXCurve = new QwtPlotCurve("Accel X");
+	m_accelYCurve = new QwtPlotCurve("Accel Y");
+	m_accelXCurve->setPen( QPen( Qt::black ) );
+	m_accelYCurve->setPen( QPen( Qt::red));
+	m_accelXCurve->attach( ui->plot );
+	m_accelYCurve->attach(ui->plot);
+
+	m_gyroXData = new QwtPointSeriesData();
+	m_gyroYData = new QwtPointSeriesData();
+	m_gyroXCurve = new QwtPlotCurve("Gyro X");
+	m_gyroYCurve = new QwtPlotCurve("Gyro Y");
+	m_gyroXCurve->setPen( QPen( Qt::green ) );
+	m_gyroYCurve->setPen( QPen( Qt::blue));
+	m_gyroXCurve->attach( ui->plot );
+	m_gyroYCurve->attach(ui->plot);
 
 	ui->plot->setCanvasBackground(Qt::white);
 	// Axis
 	ui->plot->setAxisTitle( QwtPlot::xBottom, "Seconds" );
 	ui->plot->setAxisTitle( QwtPlot::yLeft, "Values" );
-	ui->plot->setAxisScale( QwtPlot::yLeft, -100, 100 );
+	ui->plot->setAxisScale( QwtPlot::yLeft, -256, 256 );
 
-	updatePlot(0, 0);
+	updatePlot(0, 0, 0, 0);
 
 //	QTimer* t = new QTimer(this);
 //	t->setInterval(10);
@@ -43,20 +53,30 @@ MainWindow::MainWindow(QWidget *parent) :
 //	t->start();
 }
 
-void MainWindow::updatePlot(double val, double altVal)
+void MainWindow::updatePlot(double accelX, double accelY, double gyroX, double gyroY)
 {
 	for (int i = 0; i < s_plot_length - 1; ++i) {
-		m_points[i] = m_points[i + 1];
-		m_altPoints[i] = m_altPoints[i + 1];
+		m_accelXPoints[i] = m_accelXPoints[i + 1];
+		m_accelYPoints[i] = m_accelYPoints[i + 1];
+		m_gyroXPoints[i] = m_gyroXPoints[i + 1];
+		m_gyroYPoints[i] = m_gyroYPoints[i + 1];
 	}
-	m_points[s_plot_length - 1] = QPointF(m_counter, val);
-	m_altPoints[s_plot_length - 1] = QPointF(m_counter, altVal);
+	m_accelXPoints[s_plot_length - 1] = QPointF(m_counter, accelX);
+	m_accelYPoints[s_plot_length - 1] = QPointF(m_counter, accelY);
+	m_gyroXPoints[s_plot_length - 1] = QPointF(m_counter, gyroX);
+	m_gyroYPoints[s_plot_length - 1] = QPointF(m_counter, gyroY);
 
 	++m_counter;
-	m_plotData->setSamples(m_points);
-	m_altPlotData->setSamples(m_altPoints);
-	m_plotCurve->setData( m_plotData );
-	m_altPlotCurve->setData(m_altPlotData);
+	m_accelXData->setSamples(m_accelXPoints);
+	m_accelYData->setSamples(m_accelYPoints);
+	m_accelXCurve->setData( m_accelXData );
+	m_accelYCurve->setData(m_accelYData);
+
+	m_gyroXData->setSamples(m_gyroXPoints);
+	m_gyroYData->setSamples(m_gyroYPoints);
+	m_gyroXCurve->setData( m_gyroXData );
+	m_gyroYCurve->setData(m_gyroYData);
+
 	ui->plot->setAxisScale( QwtPlot::xBottom, m_counter - 100, m_counter );
 
 	ui->plot->replot();
@@ -79,16 +99,22 @@ void MainWindow::onTcpRead()
 		if (!line.isEmpty()) {
 			ui->logTextBrowser->setText(line);
 			QStringList values = line.split(",");
-			if (values.length() < 11) {
+			if (values.length() < 14) {
 				qDebug() << "Wrong format of debug input";
 			}
 			else {
-				ui->powerAllLcd->display(values.at(6).toInt());
-				ui->powerX1Lcd->display(values.at(7).toInt());
-				ui->powerX2Lcd->display(values.at(8).toInt());
-				ui->powerY1Lcd->display(values.at(9).toInt());
-				ui->powerY2Lcd->display(values.at(10).toInt());
-				updatePlot(values.at(0).toDouble(), values.at(1).toDouble());
+				ui->powerAllLcd->display(values.at(9).toInt());
+				ui->powerX1Lcd->display(values.at(10).toInt());
+				ui->powerX2Lcd->display(values.at(11).toInt());
+				ui->powerY1Lcd->display(values.at(12).toInt());
+				ui->powerY2Lcd->display(values.at(13).toInt());
+				double ax = values.at(0).toDouble();
+				double ay = values.at(1).toDouble();
+				double gx = values.at(2).toDouble();
+				double gy = values.at(3).toDouble();
+				updatePlot(ax, ay, gx, gy);
+				ui->xSlider->setValue(floor(ax));
+				ui->ySlider->setValue(floor(ay));
 			}
 		}
 		ui->logTextBrowser->update();
