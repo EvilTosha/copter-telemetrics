@@ -110,8 +110,8 @@ void MainWindow::onTcpRead()
 				ui->powerY2Lcd->display(values.at(13).toInt());
 				double ax = values.at(0).toDouble();
 				double ay = values.at(1).toDouble();
-				double gx = values.at(2).toDouble();
-				double gy = values.at(3).toDouble();
+				double gx = values.at(3).toDouble();
+				double gy = values.at(4).toDouble();
 				updatePlot(ax, ay, gx, gy);
 				ui->xSlider->setValue(floor(ax));
 				ui->ySlider->setValue(floor(ay));
