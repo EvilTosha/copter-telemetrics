@@ -10,16 +10,27 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui(new Ui::MainWindow),
 	m_accelXPoints(100, QPointF(0, 0)), m_accelYPoints(100, QPointF(0, 0)),
 	m_gyroXPoints(100, QPointF(0, 0)), m_gyroYPoints(100, QPointF(0, 0)),
-	m_counter(0)
+	m_counter(0),
+  m_power(0)
 {
 	ui->setupUi(this);
 
 	m_tcpSocket = new QTcpSocket(this);
 	connect(m_tcpSocket, SIGNAL(readyRead()), this, SLOT(onTcpRead()));
 
+	m_controlSocket = new QTcpSocket(this);
+	connect(m_tcpSocket, SIGNAL(readyRead()), this, SLOT(onControlRead()));
+	
 	connect(ui->connectButton, SIGNAL(clicked()), this, SLOT(connectToServer()));
-	connect(ui->disconnectButton, SIGNAL(clicked()), this, SLOT(disconnectToServer()));
-
+	connect(ui->disconnectButton, SIGNAL(clicked()), this, SLOT(disconnectFromServer()));
+	
+	// control buttons
+	connect(ui->up2Button, SIGNAL(clicked()), this, SLOT(handleControlButton()));
+	connect(ui->up1Button, SIGNAL(clicked()), this, SLOT(handleControlButton()));
+	connect(ui->zeroButton, SIGNAL(clicked()), this, SLOT(handleControlButton()));
+	connect(ui->down1Button, SIGNAL(clicked()), this, SLOT(handleControlButton()));
+	connect(ui->down2Button, SIGNAL(clicked()), this, SLOT(handleControlButton()));
+					
 	// plotting setup
 	m_accelXData = new QwtPointSeriesData();
 	m_accelYData = new QwtPointSeriesData();
@@ -42,15 +53,35 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->plot->setCanvasBackground(Qt::white);
 	// Axis
 	ui->plot->setAxisTitle( QwtPlot::xBottom, "Seconds" );
-	ui->plot->setAxisTitle( QwtPlot::yLeft, "Values" );
-	ui->plot->setAxisScale( QwtPlot::yLeft, -256, 256 );
+	ui->plot->setAxisTitle( QwtPlot::yLeft, "Degrees" );
+	ui->plot->setAxisScale( QwtPlot::yLeft, -90, 90 );
 
 	updatePlot(0, 0, 0, 0);
+}
 
-//	QTimer* t = new QTimer(this);
-//	t->setInterval(10);
-//	connect(t, SIGNAL(timeout()), this, SLOT(updatePlot()));
-//	t->start();
+void MainWindow::onPowerChange(int val) {
+	// send power change command
+}
+
+void MainWindow::handleControlButton()
+{
+	// TODO: proper handling
+	QObject* s = sender();
+	if (s == ui->up2Button) {
+		controlSend(MainWindow::PowerUp2);
+	}
+	if (s == ui->up1Button) {
+		controlSend(MainWindow::PowerUp1);
+	}
+	if (s == ui->zeroButton) {
+		controlSend(MainWindow::PowerMin);
+	}
+	if (s == ui->down1Button) {
+		controlSend(MainWindow::PowerDown1);
+	}
+	if (s == ui->down2Button) {
+		controlSend(MainWindow::PowerDown2);
+	}
 }
 
 void MainWindow::updatePlot(double accelX, double accelY, double gyroX, double gyroY)
@@ -82,10 +113,31 @@ void MainWindow::updatePlot(double accelX, double accelY, double gyroX, double g
 	ui->plot->replot();
 }
 
+void MainWindow::controlSend(MainWindow::ControlCommand command)
+{
+	// TODO: develop an apropriate API
+	char commandToSend;
+	switch (command) {
+		case PowerUp1:      commandToSend = 'c'; break;
+		case PowerUp2:      commandToSend = 'v'; break;
+		case PowerMax:      commandToSend = 'V'; break;
+		case PowerDown1:    commandToSend = 'x'; break;
+		case PowerDown2:    commandToSend = 'z'; break;
+		case PowerMin:      commandToSend = 'Z'; break;
+		case EmergencyStop: commandToSend = 'a'; break;
+		case StartupAdjust: commandToSend = '0'; break;
+		default: qDebug() << "Unknown command " << command; return; break;
+	}
+	if (!m_controlSocket->putChar(commandToSend)) {
+		qDebug() << "Failed to send command to device";
+	}
+}
+
 MainWindow::~MainWindow()
 {
 	delete ui;
 	m_tcpSocket->close();
+	m_controlSocket->close();
 }
 
 void MainWindow::onTcpRead()
@@ -99,7 +151,7 @@ void MainWindow::onTcpRead()
 		if (!line.isEmpty()) {
 			ui->logTextBrowser->setText(line);
 			QStringList values = line.split(",");
-			if (values.length() < 14) {
+			if (values.length() < 4) {
 				qDebug() << "Wrong format of debug input";
 			}
 			else {
@@ -108,10 +160,10 @@ void MainWindow::onTcpRead()
 				ui->powerX2Lcd->display(values.at(11).toInt());
 				ui->powerY1Lcd->display(values.at(12).toInt());
 				ui->powerY2Lcd->display(values.at(13).toInt());
-				double ax = values.at(0).toDouble();
-				double ay = values.at(1).toDouble();
-				double gx = values.at(3).toDouble();
-				double gy = values.at(4).toDouble();
+				double ax = values.at(0).toDouble() * 180 / M_PI;
+				double ay = values.at(1).toDouble() * 180 / M_PI;
+				double gx = values.at(3).toDouble() * 180 / M_PI;
+				double gy = values.at(4).toDouble() * 180 / M_PI;
 				updatePlot(ax, ay, gx, gy);
 				ui->xSlider->setValue(floor(ax));
 				ui->ySlider->setValue(floor(ay));
@@ -121,16 +173,32 @@ void MainWindow::onTcpRead()
 	}
 }
 
+void MainWindow::onControlRead() {
+	if (!m_controlSocket->isReadable())
+		return;
+	while (m_controlSocket->bytesAvailable() > 0) {
+		char data[1024];
+		m_controlSocket->readLine(data, 1024);
+		QString line(data);
+		if (!line.isEmpty()) {
+			ui->statusBar->showMessage(line, 2000);
+		}
+	}
+}
+
 void MainWindow::connectToServer()
 {
 	QString hostName(ui->hostNameLineEdit->text());
 	quint16 port = ui->portLineEdit->text().toUInt();
+	quint16 controlPort = ui->controlPortLineEdit->text().toUInt();
 	m_tcpSocket->connectToHost(hostName, port);
+	m_controlSocket->connectToHost(hostName, controlPort);
 }
 
-void MainWindow::disconnectToServer()
+void MainWindow::disconnectFromServer()
 {
 	m_tcpSocket->disconnectFromHost();
+	m_controlSocket->disconnectFromHost();
 }
 
 
