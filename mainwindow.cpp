@@ -10,11 +10,17 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui(new Ui::MainWindow),
 	m_accelXPoints(100, QPointF(0, 0)), m_accelYPoints(100, QPointF(0, 0)),
 	m_gyroXPoints(100, QPointF(0, 0)), m_gyroYPoints(100, QPointF(0, 0)),
-	m_counter(0),
-  m_power(0)
+	m_counter(0), m_power(0)
 {
 	ui->setupUi(this);
 
+    xScene = new QGraphicsScene();
+    yScene = new QGraphicsScene();
+    xScene->setBackgroundBrush(Qt::white);
+    yScene->setBackgroundBrush(Qt::white);
+    ui->xGraphicsView->setScene(xScene);
+    ui->yGraphicsView->setScene(yScene);
+    
 	m_tcpSocket = new QTcpSocket(this);
 	connect(m_tcpSocket, SIGNAL(readyRead()), this, SLOT(onTcpRead()));
 
@@ -47,8 +53,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_gyroYCurve = new QwtPlotCurve("Gyro Y");
 	m_gyroXCurve->setPen( QPen( Qt::green ) );
 	m_gyroYCurve->setPen( QPen( Qt::blue));
-	m_gyroXCurve->attach( ui->plot );
-	m_gyroYCurve->attach(ui->plot);
+//	m_gyroXCurve->attach( ui->plot );
+//    m_gyroYCurve->attach(ui->plot);
 
 	ui->plot->setCanvasBackground(Qt::white);
 	// Axis
@@ -111,6 +117,19 @@ void MainWindow::updatePlot(double accelX, double accelY, double gyroX, double g
 	ui->plot->setAxisScale( QwtPlot::xBottom, m_counter - 100, m_counter );
 
 	ui->plot->replot();
+    
+    qreal l = 40;
+    qreal dx = l * cos(accelX);
+    qreal dy = l * sin(accelX);
+    QLineF line(50 - dx, 50 - dy, 50 + dx, 50 + dy);
+    xScene->addLine(line);
+    ui->xGraphicsView->setScene(xScene);
+
+    dx = l * cos(accelY);
+    dy = l * sin(accelY);
+    line = QLineF(50 - dx, 50 - dy, 50 + dx, 50 + dy);
+    yScene->addLine(line);
+    ui->yGraphicsView->setScene(yScene);
 }
 
 void MainWindow::controlSend(MainWindow::ControlCommand command)
@@ -151,7 +170,7 @@ void MainWindow::onTcpRead()
 		if (!line.isEmpty()) {
 			ui->logTextBrowser->setText(line);
 			QStringList values = line.split(",");
-			if (values.length() < 4) {
+			if (values.length() < 14) {
 				qDebug() << "Wrong format of debug input";
 			}
 			else {
@@ -160,14 +179,12 @@ void MainWindow::onTcpRead()
 				ui->powerX2Lcd->display(values.at(11).toInt());
 				ui->powerY1Lcd->display(values.at(12).toInt());
 				ui->powerY2Lcd->display(values.at(13).toInt());
-				double ax = values.at(0).toDouble() * 180 / M_PI;
+                double ax = values.at(4).toDouble() * 180 / M_PI;
 				double ay = values.at(1).toDouble() * 180 / M_PI;
-				double gx = values.at(3).toDouble() * 180 / M_PI;
-				double gy = values.at(4).toDouble() * 180 / M_PI;
+                double gx = values.at(3).toDouble() * 180 / M_PI;
+                double gy = values.at(4).toDouble() * 180 / M_PI;
 				updatePlot(ax, ay, gx, gy);
-				ui->xSlider->setValue(floor(ax));
-				ui->ySlider->setValue(floor(ay));
-			}
+            }
 		}
 		ui->logTextBrowser->update();
 	}

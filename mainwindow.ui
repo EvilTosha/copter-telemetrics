@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>706</width>
+    <width>786</width>
     <height>461</height>
    </rect>
   </property>
@@ -178,34 +178,34 @@
     <item row="2" column="4">
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QSlider" name="ySlider">
-        <property name="styleSheet">
-         <string notr="true"/>
+       <widget class="QGraphicsView" name="yGraphicsView">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>100</height>
+         </size>
         </property>
-        <property name="minimum">
-         <number>-200</number>
-        </property>
-        <property name="maximum">
-         <number>200</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>100</height>
+         </size>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QSlider" name="xSlider">
-        <property name="styleSheet">
-         <string notr="true"/>
+       <widget class="QGraphicsView" name="xGraphicsView">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>100</height>
+         </size>
         </property>
-        <property name="minimum">
-         <number>-200</number>
-        </property>
-        <property name="maximum">
-         <number>200</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>100</height>
+         </size>
         </property>
        </widget>
       </item>
@@ -218,7 +218,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>706</width>
+     <width>786</width>
      <height>21</height>
     </rect>
    </property>

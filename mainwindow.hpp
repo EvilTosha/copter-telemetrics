@@ -3,9 +3,11 @@
 
 #include <QMainWindow>
 #include <QTcpSocket>
+#include <QGraphicsScene>
 
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
+
 
 
 namespace Ui {
@@ -54,6 +56,9 @@ private:
 	QwtPlotCurve* m_accelXCurve, *m_accelYCurve, *m_gyroXCurve, *m_gyroYCurve;
 	int m_counter;
 	int m_power;
+    
+    QGraphicsScene* xScene;
+    QGraphicsScene* yScene;
 };
 
 #endif // MAINWINDOW_HPP
