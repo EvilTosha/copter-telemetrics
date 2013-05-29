@@ -20,5 +20,5 @@ qrc_*.cpp
 Makefile
 Makefile.Debug
 Makefile.Release
-ui_MainWindow.h
+ui_mainwindow.h
 *-build-*

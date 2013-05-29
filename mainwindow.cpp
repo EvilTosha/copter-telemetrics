@@ -1,32 +1,37 @@
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 
+#include <qwt_plot_marker.h>
+#include <qwt_symbol.h>
+
 #include <QTimer>
 
 static const int s_plot_length = 100;
 
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
-	ui(new Ui::MainWindow),
-	m_accelXPoints(100, QPointF(0, 0)), m_accelYPoints(100, QPointF(0, 0)),
-	m_gyroXPoints(100, QPointF(0, 0)), m_gyroYPoints(100, QPointF(0, 0)),
-	m_counter(0), m_power(0)
+  ui(new Ui::MainWindow),
+  m_accelXPoints(100, QPointF(0, 0)), m_accelYPoints(100, QPointF(0, 0)),
+  m_gyroXPoints(100, QPointF(0, 0)), m_gyroYPoints(100, QPointF(0, 0)),
+  m_counter(0), m_power(0)
 {
 	ui->setupUi(this);
-
-    xScene = new QGraphicsScene();
-    yScene = new QGraphicsScene();
-    xScene->setBackgroundBrush(Qt::white);
-    yScene->setBackgroundBrush(Qt::white);
-    ui->xGraphicsView->setScene(xScene);
-    ui->yGraphicsView->setScene(yScene);
-    
+	
+	// init scenes
+	xScene = new QGraphicsScene();
+	yScene = new QGraphicsScene();
+	xScene->setBackgroundBrush(Qt::white);
+	yScene->setBackgroundBrush(Qt::white);
+	ui->xGraphicsView->setScene(xScene);
+	ui->yGraphicsView->setScene(yScene);
+	
 	m_tcpSocket = new QTcpSocket(this);
 	connect(m_tcpSocket, SIGNAL(readyRead()), this, SLOT(onTcpRead()));
-
+	
 	m_controlSocket = new QTcpSocket(this);
 	connect(m_tcpSocket, SIGNAL(readyRead()), this, SLOT(onControlRead()));
 	
+	// connecting
 	connect(ui->connectButton, SIGNAL(clicked()), this, SLOT(connectToServer()));
 	connect(ui->disconnectButton, SIGNAL(clicked()), this, SLOT(disconnectFromServer()));
 	
@@ -36,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->zeroButton, SIGNAL(clicked()), this, SLOT(handleControlButton()));
 	connect(ui->down1Button, SIGNAL(clicked()), this, SLOT(handleControlButton()));
 	connect(ui->down2Button, SIGNAL(clicked()), this, SLOT(handleControlButton()));
-					
+	
 	// plotting setup
 	m_accelXData = new QwtPointSeriesData();
 	m_accelYData = new QwtPointSeriesData();
@@ -46,22 +51,30 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_accelYCurve->setPen( QPen( Qt::red));
 	m_accelXCurve->attach( ui->plot );
 	m_accelYCurve->attach(ui->plot);
-
+	
 	m_gyroXData = new QwtPointSeriesData();
 	m_gyroYData = new QwtPointSeriesData();
 	m_gyroXCurve = new QwtPlotCurve("Gyro X");
 	m_gyroYCurve = new QwtPlotCurve("Gyro Y");
 	m_gyroXCurve->setPen( QPen( Qt::green ) );
 	m_gyroYCurve->setPen( QPen( Qt::blue));
-//	m_gyroXCurve->attach( ui->plot );
-//    m_gyroYCurve->attach(ui->plot);
-
+	m_gyroXCurve->attach( ui->plot );
+	m_gyroYCurve->attach(ui->plot);
+	
 	ui->plot->setCanvasBackground(Qt::white);
-	// Axis
+	// Axes
 	ui->plot->setAxisTitle( QwtPlot::xBottom, "Seconds" );
 	ui->plot->setAxisTitle( QwtPlot::yLeft, "Degrees" );
 	ui->plot->setAxisScale( QwtPlot::yLeft, -90, 90 );
-
+	
+	// zero line
+	QwtPlotMarker* zeroMarker = new QwtPlotMarker();
+	zeroMarker->setLineStyle(QwtPlotMarker::HLine);
+	zeroMarker->setLinePen(QPen(Qt::DotLine));
+	zeroMarker->setSymbol(new QwtSymbol(QwtSymbol::HLine));
+	zeroMarker->setYValue(0);
+	zeroMarker->attach(ui->plot);
+	
 	updatePlot(0, 0, 0, 0);
 }
 
@@ -92,6 +105,7 @@ void MainWindow::handleControlButton()
 
 void MainWindow::updatePlot(double accelX, double accelY, double gyroX, double gyroY)
 {
+	// update cycling buffer
 	for (int i = 0; i < s_plot_length - 1; ++i) {
 		m_accelXPoints[i] = m_accelXPoints[i + 1];
 		m_accelYPoints[i] = m_accelYPoints[i + 1];
@@ -102,34 +116,43 @@ void MainWindow::updatePlot(double accelX, double accelY, double gyroX, double g
 	m_accelYPoints[s_plot_length - 1] = QPointF(m_counter, accelY);
 	m_gyroXPoints[s_plot_length - 1] = QPointF(m_counter, gyroX);
 	m_gyroYPoints[s_plot_length - 1] = QPointF(m_counter, gyroY);
-
+	
 	++m_counter;
 	m_accelXData->setSamples(m_accelXPoints);
 	m_accelYData->setSamples(m_accelYPoints);
 	m_accelXCurve->setData( m_accelXData );
 	m_accelYCurve->setData(m_accelYData);
-
+	
 	m_gyroXData->setSamples(m_gyroXPoints);
 	m_gyroYData->setSamples(m_gyroYPoints);
 	m_gyroXCurve->setData( m_gyroXData );
 	m_gyroYCurve->setData(m_gyroYData);
-
+	
 	ui->plot->setAxisScale( QwtPlot::xBottom, m_counter - 100, m_counter );
-
+	
 	ui->plot->replot();
-    
-    qreal l = 40;
-    qreal dx = l * cos(accelX);
-    qreal dy = l * sin(accelX);
-    QLineF line(50 - dx, 50 - dy, 50 + dx, 50 + dy);
-    xScene->addLine(line);
-    ui->xGraphicsView->setScene(xScene);
-
-    dx = l * cos(accelY);
-    dy = l * sin(accelY);
-    line = QLineF(50 - dx, 50 - dy, 50 + dx, 50 + dy);
-    yScene->addLine(line);
-    ui->yGraphicsView->setScene(yScene);
+	
+	xScene->clear();
+	yScene->clear();
+	
+	// draw angle viewers
+	accelX *= M_PI / 180;
+	accelY *= M_PI / 180;
+	gyroX *= M_PI / 180;
+	gyroY *= M_PI / 180;
+	
+	qreal l = 40;
+	qreal dx = l * cos(accelX);
+	qreal dy = l * sin(accelX);
+	QLineF line(50 - dx, 50 - dy, 50 + dx, 50 + dy);
+	xScene->addLine(line);
+	ui->xGraphicsView->setScene(xScene);
+	
+	dx = l * cos(accelY);
+	dy = l * sin(accelY);
+	line = QLineF(50 - dx, 50 - dy, 50 + dx, 50 + dy);
+	yScene->addLine(line);
+	ui->yGraphicsView->setScene(yScene);
 }
 
 void MainWindow::controlSend(MainWindow::ControlCommand command)
@@ -174,17 +197,19 @@ void MainWindow::onTcpRead()
 				qDebug() << "Wrong format of debug input";
 			}
 			else {
+				// read information from raw input
 				ui->powerAllLcd->display(values.at(9).toInt());
 				ui->powerX1Lcd->display(values.at(10).toInt());
 				ui->powerX2Lcd->display(values.at(11).toInt());
 				ui->powerY1Lcd->display(values.at(12).toInt());
 				ui->powerY2Lcd->display(values.at(13).toInt());
-                double ax = values.at(4).toDouble() * 180 / M_PI;
+				// convert from radians to degrees before show
+				double ax = values.at(0).toDouble() * 180 / M_PI;
 				double ay = values.at(1).toDouble() * 180 / M_PI;
-                double gx = values.at(3).toDouble() * 180 / M_PI;
-                double gy = values.at(4).toDouble() * 180 / M_PI;
+				double gx = values.at(3).toDouble() * 180 / M_PI;
+				double gy = values.at(4).toDouble() * 180 / M_PI;
 				updatePlot(ax, ay, gx, gy);
-            }
+			}
 		}
 		ui->logTextBrowser->update();
 	}
